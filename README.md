@@ -20,26 +20,26 @@ You'll need Ruby - at least 2.3 should be fine, which can be found in all good L
 
 This apt-get command also installs the Ruby development headers and a compiler so Ruby can build extensions as part of installing dependencies:
 
-```
+```bash
 sudo apt-get install ruby ruby-dev ruby-bundler git build-essential
 ```
 
 Clone this repository to your machine:
 
-```
+```bash
 git clone https://github.com/andywhittaker/octolux.git
 cd octolux
 ```
 
 Now install the gems. You may occasionally need to re-run this as I update the repository and bring in new dependencies or update existing ones. This will install gems to `./vendor/bundle`, and so should not need root:
 
-```
+```bash
 bundle update
 ```
 
 Create a `config.ini` using the `doc/config.ini.example` as a template:
 
-```
+```bash
 cp doc/config.ini.example config.ini
 ```
 
@@ -54,7 +54,7 @@ This script needs to know information about both the master (primary) and slave 
 
 Copy `rules.rb` from the example as a starting point:
 
-```
+```bash
 cp doc/rules.example.5p.rb rules.rb
 ```
 
@@ -78,7 +78,7 @@ It's split like this because there's no way to ask the inverter for the current 
 
 You can use the provided systemd unit file to run the server. The instructions below will start it immediately, and then automatically on reboot. You may need to edit `octolux_server.service` before copying it into place, unless your installation is in `/home/pi/octolux`. You'll need to be root to do these steps:
 
-```
+```bash
 sudo cp systemd/octolux_server.service /etc/systemd/system
 sudo systemctl start octolux_server.service
 sudo systemctl enable octolux_server.service
@@ -88,17 +88,17 @@ The logs can then be seen with `journalctl -u octolux_server.service`.
 
 ### octolux.rb
 
-`octolux.rb` is intended to be from cron, and enables or disables AC charge depending on the logic written in `rules.rb` (you'll need to copy/edit an example from docs/).
+`octolux.rb` is intended to be from cron, and enables or disables AC charging depending on the logic written in `rules.rb` (you'll need to copy/edit an example from docs/).
 
 There's also a wrapper script, `octolux.sh`, which will divert output to a logfile (`octolux.log`), and also re-runs `octolux.rb` if it fails the first time (usually due to transient failures like the inverter not responding, which can occasionally happen). You'll want something like this in cron:
 
-```
+```bash
 0,30 * * * * /home/pi/octolux/octolux.sh
 ```
 
 To complement the wrapper script, there's a log rotation script which you can use like this:
 
-```
+```bash
 59 23 * * * /home/pi/octolux/rotate.sh
 ```
 
