@@ -22,6 +22,11 @@ lc = LuxController.new(host: CONFIG['lxp']['host'],
                        serial: CONFIG['lxp']['serial'],
                        datalog: CONFIG['lxp']['datalog'])
 
+lc_slave = LuxController.new(host: CONFIG['lxp']['host_slave'],
+                       port: CONFIG['lxp']['port_slave'],
+                       serial: CONFIG['lxp']['serial_slave'],
+                       datalog: CONFIG['lxp']['datalog_slave'])
+
 # MQTT
 ls = LuxStatus.new(host: CONFIG['server']['connect_host'] || CONFIG['server']['host'],
                    port: CONFIG['server']['port'])
