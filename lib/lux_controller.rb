@@ -8,6 +8,10 @@ class LuxController
   def initialize(host:, port:, serial:, datalog:)
     @host = host
     @port = port
+	#####################
+    # Line to remove first character from the inverter serial number - this is a work around to ensure Serial number is read correctly as the Ruby Gems IniFile package seems to incorrectly type cast a serial number starting with a 0
+    serial[0] = ''
+    #####################
     # these can be numeric, but we want them as strings to put into data packets
     @serial = serial.to_s
     @datalog = datalog.to_s

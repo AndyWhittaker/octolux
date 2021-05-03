@@ -1,10 +1,19 @@
 # frozen_string_literal: true
 
+$LOAD_PATH.unshift 'lib'
+
 require 'lxp/packet'
+#require 'socket'
+require 'json'
+require 'roda'
+#require 'inifile'
 
 # This starts in a thread and watches for incoming traffic from the inverter.
-#
+# It also creates a temporary json file for local display
 class LuxListener
+  JSON_FILE = '/tmp/lxp_data.json'
+  JSON_DATA = File.exist?(JSON_FILE) ? File.read(JSON_FILE) : String.new
+  
   class << self
     def run(host:, port:, slave:)
       LOGGER.info "LuxListener - host #{host} port #{port} slave #{slave}"
@@ -61,21 +70,47 @@ class LuxListener
     end
 
     def process_input(pkt, slave)
+      # Construct a temporary json file to store inverter data
+      LOGGER.info("process_input: Creating json files")
+      if @slave == 0
+      #     json_file = "~/lxp_datamaster.json"
+      else
+      #     json_file = "~/lxp_dataslave.json"
+      end
+
+      output = Hash.new # setup scope
       inputs.merge!(pkt.to_h)
+      LOGGER.info pkt
 
       n = case pkt
           when LXP::Packet::ReadInput1 then 1
+            # first packet starts a new hash
+            output = pkt.to_h
+            #JSON_DATA.replace(JSON.generate(output))
+            #File.write(JSON_FILE, JSON_DATA)
           when LXP::Packet::ReadInput2 then 2
+            # second packet merges in
+            output.merge!(pkt.to_h)
+            #JSON_DATA.replace(JSON.generate(output))
+            #File.write(JSON_FILE, JSON_DATA)
           when LXP::Packet::ReadInput3 then 3
+            # final packet merges in and saves the result
+            output.merge!(pkt.to_h)
+            JSON_DATA.replace(JSON.generate(output))
+            File.write(JSON_FILE, JSON_DATA)
           end
 
-      # Not very neat... but it allows us to see both inverters seperatly.
+      # Not very neat... but it allows us to see both inverters separately.
       if slave == 0
         MQ.publish("octolux/masterinputs/#{n}", pkt.to_h, slave)
       else
         MQ.publish("octolux/slaveinputs/#{n}", pkt.to_h, slave)
       end
-    end
+      LOGGER.info("process_input: Writing json files")
+      File.write(JSON_FILE, JSON_DATA)
+      LOGGER.info JSON_FILE
+      LOGGER.info JSON_DATA
+  end
 
     def process_read_hold(pkt, slave)
       pkt.to_h.each do |register, value|

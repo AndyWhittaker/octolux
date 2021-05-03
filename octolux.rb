@@ -1,7 +1,19 @@
 #! /usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'time'
 require_relative 'boot'
+
+solcast = Solcast.new(api_key: CONFIG['solcast']['api_key'],
+                      resource_id: CONFIG['solcast']['resource_id'])
+
+solcast_slate = solcast.stale(CONFIG['solcast']['max_forecast_age'])
+solcast_valid_updating_window = Time.now.hour < 22 # true if update allowed - time as per machine time
+solcast_updated = (solcast_slate and solcast_valid_updating_window)
+#LOGGER.debug "Solcast valid window = #{solcast_valid_updating_window}"
+#LOGGER.debug "Solcast stale data   = #{solcast_slate}"
+solcast.update if solcast_updated
+LOGGER.info "Solcast data updated = #{solcast_updated}"
 
 octopus = Octopus.new(product_code: CONFIG['octopus']['product_code'],
                       tariff_code: CONFIG['octopus']['tariff_code'])
@@ -15,19 +27,17 @@ end
 # rubocop:disable Lint/UselessAssignment
 
 # FIXME: duplicated in mq.rb, could move to boot.rb?
-
-# This is for the primary (master) inverter
 lc = LuxController.new(host: CONFIG['lxp']['host'],
                        port: CONFIG['lxp']['port'],
                        serial: CONFIG['lxp']['serial'],
                        datalog: CONFIG['lxp']['datalog'])
 
+# This is for the secondary (slave) inverter					   
 lc_slave = LuxController.new(host: CONFIG['lxp']['host_slave'],
                        port: CONFIG['lxp']['port_slave'],
                        serial: CONFIG['lxp']['serial_slave'],
                        datalog: CONFIG['lxp']['datalog_slave'])
 
-# MQTT
 ls = LuxStatus.new(host: CONFIG['server']['connect_host'] || CONFIG['server']['host'],
                    port: CONFIG['server']['port'])
 
