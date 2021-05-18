@@ -19,15 +19,15 @@ Thread.new do
   loop do
     t = Thread.new do
       begin
-        LOGGER.info("Creating new Master LuxListener")
+        LOGGER.info("server- Creating new Master LuxListener")
         LuxListener.run(host: CONFIG['lxp']['host'], port: CONFIG['lxp']['port'], slave: 0)
       rescue StandardError => e
-        LOGGER.error "LuxListener Master Thread: #{e}"
+        LOGGER.error "server- LuxListener Master Thread: #{e}"
         LOGGER.debug e.backtrace.join("\n")
       end
     end
     t.join
-    LOGGER.info 'Restarting Master LuxListener Thread in 5 seconds'
+    LOGGER.info 'server- Restarting Master LuxListener Thread in 5 seconds'
     sleep 5
   end
 end
@@ -37,15 +37,15 @@ Thread.new do
   loop do
     tslave = Thread.new do
       begin
-        LOGGER.info("Creating new Slave LuxListener")
+        LOGGER.info("server- Creating new Slave LuxListener")
         LuxListener.run(host: CONFIG['lxp']['host_slave'], port: CONFIG['lxp']['port_slave'], slave: 1)
       rescue StandardError => e
-        LOGGER.error "LuxListener Slave Thread: #{e}"
+        LOGGER.error "server- LuxListener Slave Thread: #{e}"
         LOGGER.debug e.backtrace.join("\n")
       end
     end
     tslave.join
-    LOGGER.info 'Restarting Slave LuxListener Thread in 5 seconds'
+    LOGGER.info 'server- Restarting Slave LuxListener Thread in 5 seconds'
     sleep 5
   end
 end

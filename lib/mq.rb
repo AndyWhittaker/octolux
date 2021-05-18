@@ -13,6 +13,8 @@ class MQ
       sub.subscribe_to 'octolux/cmd/charge_pct', &method(:charge_pct_cb)
       sub.subscribe_to 'octolux/cmd/discharge_pct', &method(:discharge_pct_cb)
 
+      sub.subscribe_to 'octolux/cmd/charge_amount_pct', &method(:charge_amount_pct_cb)
+
       Thread.stop # sleep forever
     end
 
@@ -107,6 +109,20 @@ class MQ
       sub.publish_to('octolux/result/discharge_pct', 'FAIL')
     end
 
+    def charge_amount_pct_cb(data, *)
+      LOGGER.info "MQ cmd/charge_amount_pct => #{data}"
+      if @slave == 0
+		r = (lux_controller.charge_amount_pct = data.to_i)
+		lux_controller.close
+	  else
+		r = (lux_controller.charge_amount_pct = data.to_i)
+		lux_controller.close
+	  end
+      sub.publish_to('octolux/result/charge_amount_pct', r == data.to_i ? 'OK' : 'FAIL')
+    rescue LuxController::SocketError
+      sub.publish_to('octolux/result/charge_amount_pct', 'FAIL')
+    end
+
     def uri
       CONFIG['mqtt']['uri']
     end
@@ -126,7 +142,7 @@ class MQ
                                               port: CONFIG['lxp']['port_slave'],
                                               serial: CONFIG['lxp']['serial_slave'],
                                               datalog: CONFIG['lxp']['datalog_slave'])
-        end
+    end
 
     def bool(input)
       case input

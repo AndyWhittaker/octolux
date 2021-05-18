@@ -1,33 +1,3 @@
-Skip to content
-Search or jump to…
-
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@AndyWhittaker 
-m1geo
-/
-octolux
-forked from biohead/octolux
-1
-110
-Code
-Pull requests
-Actions
-Projects
-Security
-Insights
-octolux/lib/solcast.rb /
-@m1geo
-m1geo Some bug fixes between Ruby versions
-Latest commit 52c7e6f 3 days ago
- History
- 2 contributors
-@m1geo@celsworth
-107 lines (89 sloc)  2.54 KB
-  
 # frozen_string_literal: true
 
 require 'pathname'

@@ -8,10 +8,6 @@ class LuxController
   def initialize(host:, port:, serial:, datalog:)
     @host = host
     @port = port
-	#####################
-    # Line to remove first character from the inverter serial number - this is a work around to ensure Serial number is read correctly as the Ruby Gems IniFile package seems to incorrectly type cast a serial number starting with a 0
-    serial[0] = ''
-    #####################
     # these can be numeric, but we want them as strings to put into data packets
     @serial = serial.to_s
     @datalog = datalog.to_s
@@ -23,7 +19,7 @@ class LuxController
   end
 
   def read_input(num)
-    LOGGER.info "read_input(#{num})"
+    LOGGER.debug "read_input(#{num})"
 
     type = case num
            when 1 then LXP::Packet::ReadInput1
@@ -72,6 +68,16 @@ class LuxController
     set_register(LXP::Packet::Registers::DISCHG_POWER_PERCENT_CMD, pct)
   end
 
+  # Untested - get current charge amount %
+  def charge_amount_pct
+    read_register(LXP::Packet::Registers::AC_CHARGE_SOC_LIMIT)
+  end
+
+  # Untested - set current charge amount %
+  def charge_amount_pct=(pct)
+    set_register(LXP::Packet::Registers::AC_CHARGE_SOC_LIMIT, pct)
+  end
+
   private
 
   # Update a given register (21 for AC CHARGE/DISCHARGE) with the given bit
@@ -80,12 +86,12 @@ class LuxController
   # Returns true if the bit was already as requested, or updated.
   #
   def update_register(register, bit, enable)
-    LOGGER.info "update_register(#{register}, #{bit}, #{enable})"
+    LOGGER.debug "update_register(#{register}, #{bit}, #{enable})"
 
     old_val = read_register(register)
     enabled = (old_val & bit) == bit
     if enable == enabled
-      LOGGER.info "update_register(#{register}) => no action required"
+      LOGGER.debug "update_register(#{register}) => no action required"
       return true
     end
 
@@ -96,18 +102,18 @@ class LuxController
   end
 
   def read_register(register)
-    LOGGER.info "read_register(#{register})"
+    LOGGER.debug "read_register(#{register})"
     pkt = packet(type: LXP::Packet::ReadHold, register: register)
     socket.write(pkt)
     r = read_reply(pkt)
 
-    LOGGER.info "read_register(#{register}) => #{r.value}"
+    LOGGER.debug "read_register(#{register}) => #{r.value}"
 
     r.value
   end
 
   def set_register(register, val)
-    LOGGER.info "set_register(#{register}, #{val})"
+    LOGGER.debug "set_register(#{register}, #{val})"
 
     pkt = packet(type: LXP::Packet::WriteSingle, register: register)
     pkt.value = val
@@ -115,7 +121,7 @@ class LuxController
     socket.write(pkt)
     r = read_reply(pkt)
 
-    LOGGER.info "set_register(#{register}) => #{r.value}"
+    LOGGER.debug "set_register(#{register}) => #{r.value}"
 
     r.value
   end
@@ -134,7 +140,7 @@ class LuxController
 
   def read_reply(pkt)
     unless (r = socket.read_reply(pkt))
-      LOGGER.fatal 'Invalid/no reply from inverter'
+      LOGGER.fatal 'invalid/no reply from inverter'
       raise SocketError
     end
 

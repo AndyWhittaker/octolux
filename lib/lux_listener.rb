@@ -4,8 +4,8 @@ $LOAD_PATH.unshift 'lib'
 
 require 'lxp/packet'
 #require 'socket'
-require 'json'
-require 'roda'
+#require 'json'
+#require 'roda'
 #require 'inifile'
 
 # This starts in a thread and watches for incoming traffic from the inverter.
@@ -22,23 +22,23 @@ class LuxListener
       loop do
         socket = LuxSocket.new(host: host, port: port)
         if @slave == 0
-          LOGGER.info("Created new Master LuxListener")          
+          LOGGER.info("lux_listener- Created new Master LuxListener")          
         else
-          LOGGER.info("Created new Slave LuxListener")
+          LOGGER.info("lux_listener- Created new Slave LuxListener")
         end
 
         listen(socket, slave)
       rescue StandardError => e
         if @slave == 0
-          LOGGER.error "Socket Master Error: #{e}"
+          LOGGER.error "lux_listener- Socket Master Error: #{e}"
         else
-          LOGGER.error "Socket Slave Error: #{e}"
+          LOGGER.error "lux_listener- Socket Slave Error: #{e}"
         end
         LOGGER.debug e.backtrace.join("\n")
         if @slave == 0
-          LOGGER.info 'Reconnecting to Master in 5 seconds'
+          LOGGER.info 'lux_listener- Reconnecting to Master in 5 seconds'
         else
-          LOGGER.info 'Reconnecting to Slave in 5 seconds'
+          LOGGER.info 'lux_listener- Reconnecting to Slave in 5 seconds'
         end
         sleep 5
       end
@@ -70,35 +70,13 @@ class LuxListener
     end
 
     def process_input(pkt, slave)
-      # Construct a temporary json file to store inverter data
-      LOGGER.info("process_input: Creating json files")
-      if @slave == 0
-      #     json_file = "~/lxp_datamaster.json"
-      else
-      #     json_file = "~/lxp_dataslave.json"
-      end
-
-      output = Hash.new # setup scope
       inputs.merge!(pkt.to_h)
-      LOGGER.info pkt
 
       n = case pkt
           when LXP::Packet::ReadInput1 then 1
-            # first packet starts a new hash
-            output = pkt.to_h
-            #JSON_DATA.replace(JSON.generate(output))
-            #File.write(JSON_FILE, JSON_DATA)
           when LXP::Packet::ReadInput2 then 2
-            # second packet merges in
-            output.merge!(pkt.to_h)
-            #JSON_DATA.replace(JSON.generate(output))
-            #File.write(JSON_FILE, JSON_DATA)
           when LXP::Packet::ReadInput3 then 3
-            # final packet merges in and saves the result
-            output.merge!(pkt.to_h)
-            JSON_DATA.replace(JSON.generate(output))
-            File.write(JSON_FILE, JSON_DATA)
-          end
+		  end
 
       # Not very neat... but it allows us to see both inverters separately.
       if slave == 0
@@ -106,10 +84,6 @@ class LuxListener
       else
         MQ.publish("octolux/slaveinputs/#{n}", pkt.to_h, slave)
       end
-      LOGGER.info("process_input: Writing json files")
-      File.write(JSON_FILE, JSON_DATA)
-      LOGGER.info JSON_FILE
-      LOGGER.info JSON_DATA
   end
 
     def process_read_hold(pkt, slave)

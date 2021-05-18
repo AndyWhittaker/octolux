@@ -38,6 +38,7 @@ lc_slave = LuxController.new(host: CONFIG['lxp']['host_slave'],
                        serial: CONFIG['lxp']['serial_slave'],
                        datalog: CONFIG['lxp']['datalog_slave'])
 
+# used by server.rb to open a listening port.
 ls = LuxStatus.new(host: CONFIG['server']['connect_host'] || CONFIG['server']['host'],
                    port: CONFIG['server']['port'])
 
